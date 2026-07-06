@@ -50,7 +50,7 @@ namespace WinExplorer
         // ── Selection / hover ────────────────────────────────────────────────
         public static readonly Color SelFill        = Color.FromArgb(204, 232, 255); // #CCE8FF active selection fill
         public static readonly Color SelBorder      = Color.FromArgb(153, 209, 255); // #99D1FF active selection border
-        public static readonly Color ItemHover      = Color.FromArgb(229, 227, 255); // #E5E3FF row hover (borderless)
+        public static readonly Color ItemHover      = Color.FromArgb(229, 243, 255); // #E5E3FF row hover (borderless)
         public static readonly Color InactiveDirFill= Color.FromArgb(217, 217, 217); // #D9D9D9 inactive folder selection
         // inactive file selection = border-only using SelBorder
 
