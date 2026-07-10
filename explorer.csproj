@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <RootNamespace>WinExplorer</RootNamespace>
-    <AssemblyName>WinExplorer</AssemblyName>
+    <RootNamespace>explorer</RootNamespace>
+    <AssemblyName>explorer</AssemblyName>
   </PropertyGroup>
 </Project>
