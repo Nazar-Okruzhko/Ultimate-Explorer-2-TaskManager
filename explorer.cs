@@ -48,7 +48,7 @@ namespace WinExplorer
     {
         public static readonly Color SelFill        = Color.FromArgb(204, 232, 255);
         public static readonly Color SelBorder      = Color.FromArgb(153, 209, 255);
-        public static readonly Color ItemHover      = Color.FromArgb(229, 243, 255);
+        public static readonly Color ItemHover      = Color.FromArgb(229,243,255); // #E5F3FF
         public static readonly Color InactiveDirFill= Color.FromArgb(217, 217, 217);
         public static readonly Color HdrBg          = Color.White;
         public static readonly Color HdrHover       = Color.FromArgb(217, 235, 249);
@@ -74,9 +74,9 @@ namespace WinExplorer
         // Menu background
         public static readonly Color MenuBg    = Color.FromArgb(242,242,242); // #F2F2F2
  
-        public static readonly Font  UiFont  = new Font("Microsoft Sans Serif", 9f);
-        public static readonly Font  UiBold  = new Font("Microsoft Sans Serif", 9f, FontStyle.Bold);
-        public static readonly Font  UiSmall = new Font("Microsoft Sans Serif", 8f);
+        public static readonly Font  UiFont  = new Font("Segoe UI", 9f);
+        public static readonly Font  UiBold  = new Font("Segoe UI", 9f, FontStyle.Bold);
+        public static readonly Font  UiSmall = new Font("Segoe UI", 8f);
         public static readonly Font  Mono    = new Font("Consolas", 8.5f);
  
         public static void FillSel(Graphics g, Rectangle r)
@@ -278,6 +278,32 @@ namespace WinExplorer
             Path.GetDirectoryName(Application.ExecutablePath)??"","icons","Win10");
         static readonly Dictionary<string,Image> Cache=new Dictionary<string,Image>(StringComparer.OrdinalIgnoreCase);
  
+        public static Image GetLarge(string name)
+        {
+            string k256=name+"_256";
+            if(Cache.TryGetValue(k256,out var h256))return h256;
+            // Try embedded _256 variant
+            Image img=LoadEmbedded(name+"_256");
+            if(img==null)
+            {
+                // Scale up regular icon with NearestNeighbor (pixelated, no blur, transparent bg)
+                var small=Get(name);
+                if(small!=null)
+                {
+                    var big=new Bitmap(256,256,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    using(var g=Graphics.FromImage(big))
+                    {
+                        g.Clear(Color.Transparent);
+                        g.InterpolationMode=InterpolationMode.NearestNeighbor;
+                        g.PixelOffsetMode=PixelOffsetMode.Half;
+                        g.DrawImage(small,0,0,256,256);
+                    }
+                    img=big;
+                }
+            }
+            return Cache[k256]=img;
+        }
+ 
         public static Image Get(string name)
         {
             if (Cache.TryGetValue(name,out var h)) return h;
@@ -314,7 +340,7 @@ namespace WinExplorer
                     case "reload": g.DrawArc(pen,2,2,11,11,-30,270);g.DrawLine(pen,12,4,9,1);g.DrawLine(pen,12,4,14,7);break;
                     case "change_view": g.FillRectangle(ink,1,1,5,5);g.FillRectangle(ink,9,1,5,5);g.FillRectangle(ink,1,9,5,5);g.FillRectangle(ink,9,9,5,5);break;
                     case "preview_pane": g.DrawRectangle(pen,1,2,13,11);g.DrawLine(pen,8,2,8,13);break;
-                    case "help": g.DrawEllipse(pen,1,1,13,13);using(var f2=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})g.DrawString("?",new Font("Microsoft Sans Serif",7.5f,FontStyle.Bold),ink,new RectangleF(0,0,16,16),f2);break;
+                    case "help": g.DrawEllipse(pen,1,1,13,13);using(var f2=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})g.DrawString("?",new Font("Segoe UI",7.5f,FontStyle.Bold),ink,new RectangleF(0,0,16,16),f2);break;
                     case "organize": g.DrawLine(pen,2,4,14,4);g.DrawLine(pen,2,8,14,8);g.DrawLine(pen,2,12,14,12);break;
                     case "folder": case "desktop": case "downloads": case "documents": case "pictures": case "music": case "videos": case "3dobjects": case "new_folder":
                         g.FillRectangle(new SolidBrush(Color.FromArgb(255,196,42)),1,6,14,9);
@@ -346,7 +372,7 @@ namespace WinExplorer
                     default:
                         g.DrawRectangle(pen,2,2,11,11);
                         using(var fmt=new StringFormat{Alignment=StringAlignment.Center,LineAlignment=StringAlignment.Center})
-                            g.DrawString(n.Length>0?n[0].ToString().ToUpper():"?",new Font("Microsoft Sans Serif",6f),ink,new RectangleF(0,0,16,16),fmt);
+                            g.DrawString(n.Length>0?n[0].ToString().ToUpper():"?",new Font("Segoe UI",6f),ink,new RectangleF(0,0,16,16),fmt);
                         break;
                 }
                 ink.Dispose();pen.Dispose();
@@ -618,8 +644,8 @@ namespace WinExplorer
             _fadeTimer.Tick+=(s,e)=>
             {
                 float target=_mouseInTree?1f:0f;
-                if(Math.Abs(_arrowAlpha-target)<0.05f){_arrowAlpha=target;_fadeTimer.Stop();}
-                else _arrowAlpha+=(_mouseInTree?0.12f:-0.12f);
+                if(Math.Abs(_arrowAlpha-target)<0.03f){_arrowAlpha=target;_fadeTimer.Stop();}
+                else _arrowAlpha+=(_mouseInTree?0.06f:-0.06f);
                 _arrowAlpha=Math.Max(0f,Math.Min(1f,_arrowAlpha));
                 Invalidate();
             };
@@ -1366,12 +1392,12 @@ namespace WinExplorer
             _content=new Panel{Dock=DockStyle.Fill,Padding=new Padding(0,20,0,0),BackColor=Color.White};
             _picBox  =new PictureBox{Dock=DockStyle.Fill,SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White,Visible=false};
             _txtBox  =new RichTextBox{Dock=DockStyle.Fill,ReadOnly=true,Font=Th.Mono,BackColor=Color.FromArgb(252,252,255),BorderStyle=BorderStyle.None,Visible=false,ScrollBars=RichTextBoxScrollBars.Vertical};
-            _rawTxtBox=new RichTextBox{Dock=DockStyle.Fill,ReadOnly=true,Font=Th.Mono,BackColor=Color.White,BorderStyle=BorderStyle.None,Visible=false,ScrollBars=RichTextBoxScrollBars.Vertical};
+            _rawTxtBox=new RichTextBox{Dock=DockStyle.Fill,ReadOnly=true,Font=Th.Mono,BackColor=Color.White,ForeColor=Color.FromArgb(30,30,30),BorderStyle=BorderStyle.None,Visible=false,ScrollBars=RichTextBoxScrollBars.Vertical};
             _hexPanel=new HexPanel{Dock=DockStyle.Fill,Visible=false};
             _objPanel=new ObjPanel{Dock=DockStyle.Fill,Visible=false};
             _audioPanel=new AudioPanel{Dock=DockStyle.Fill,Visible=false};
             _vidPanel=new VideoPanel{Dock=DockStyle.Fill,Visible=false};
-            _iconLbl =new Label{Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleCenter,Font=Th.UiFont,ForeColor=Th.TxtDisabled,Text="No selection",Visible=true,BackColor=Color.White};
+            _iconLbl =new Label{Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleCenter,Font=Th.UiFont,ForeColor=Th.TxtDisabled,Text="No selection",Visible=true,BackColor=Color.White,ImageAlign=ContentAlignment.MiddleCenter};
             _content.Controls.AddRange(new Control[]{_iconLbl,_vidPanel,_audioPanel,_objPanel,_hexPanel,_rawTxtBox,_txtBox,_picBox});
             _top.Controls.Add(_content);
  
@@ -1499,9 +1525,11 @@ namespace WinExplorer
                 // Thumbnail from shell (images, video, etc.) or large icon
                 // Default: stretch to 256×256 in PictureBox (fits panel)
                 // Folders: try shell thumbnail (content stack) then generic large icon
-                Image thumb=Shell.Thumbnail(item.FullPath??string.Empty,256);
-                if(thumb==null&&item.IsDirectory)thumb=Shell.LargeIcon(item.FullPath??string.Empty);
-                if(thumb==null){string icoN=item.IsDirectory?"folder":FileIcon.Get(ext);thumb=Icons.Get(icoN);}
+                // Try _256.png embedded icon, then shell thumbnail, then scaled-up embedded
+                string icoN2=item.IsDirectory?"folder":FileIcon.Get(ext);
+                Image thumb=Icons.GetLarge(icoN2);         // embedded _256.png or scaled regular
+                if(thumb==null)thumb=Shell.Thumbnail(item.FullPath??string.Empty,256);
+                if(thumb==null)thumb=Shell.LargeIcon(item.FullPath??string.Empty);
                 _iconLbl.Image=thumb; _iconLbl.ImageAlign=ContentAlignment.MiddleCenter; _iconLbl.Text="";
                 chosen=_iconLbl;
             }
@@ -1574,6 +1602,41 @@ namespace WinExplorer
     // ═════════════════════════════════════════════════════════════════════════
     //  CONTENT PANE  (with shell icons, inline rename, DnD, extended marquee)
     // ═════════════════════════════════════════════════════════════════════════
+    // IShellLink COM interface for creating .lnk shortcuts reliably
+    [ComImport, Guid("000214F9-0000-0000-C000-000000000046"),
+     InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IShellLinkW
+    {
+        void GetPath([Out,MarshalAs(UnmanagedType.LPWStr)] StringBuilder f, int c, IntPtr p, uint fl);
+        void GetIDList(out IntPtr ppidl);
+        void SetIDList(IntPtr pidl);
+        void GetDescription([Out,MarshalAs(UnmanagedType.LPWStr)] StringBuilder s, int c);
+        void SetDescription([MarshalAs(UnmanagedType.LPWStr)] string s);
+        void GetWorkingDirectory([Out,MarshalAs(UnmanagedType.LPWStr)] StringBuilder s, int c);
+        void SetWorkingDirectory([MarshalAs(UnmanagedType.LPWStr)] string s);
+        void GetArguments([Out,MarshalAs(UnmanagedType.LPWStr)] StringBuilder s, int c);
+        void SetArguments([MarshalAs(UnmanagedType.LPWStr)] string s);
+        void GetHotkey(out short h); void SetHotkey(short h);
+        void GetShowCmd(out int i);  void SetShowCmd(int i);
+        void GetIconLocation([Out,MarshalAs(UnmanagedType.LPWStr)] StringBuilder s, int c, out int i);
+        void SetIconLocation([MarshalAs(UnmanagedType.LPWStr)] string s, int i);
+        void SetRelativePath([MarshalAs(UnmanagedType.LPWStr)] string s, uint r);
+        void Resolve(IntPtr hwnd, uint fl);
+        void SetPath([MarshalAs(UnmanagedType.LPWStr)] string s);
+    }
+    [ComImport, Guid("0000010b-0000-0000-C000-000000000046"),
+     InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IPersistFile
+    {
+        [PreserveSig] int GetCurFile([MarshalAs(UnmanagedType.LPWStr)] out string s);
+        [PreserveSig] int IsDirty();
+        [PreserveSig] int Load([MarshalAs(UnmanagedType.LPWStr)] string s, uint m);
+        [PreserveSig] int Save([MarshalAs(UnmanagedType.LPWStr)] string s, [MarshalAs(UnmanagedType.Bool)] bool r);
+        [PreserveSig] int SaveCompleted([MarshalAs(UnmanagedType.LPWStr)] string s);
+    }
+    [ComImport, Guid("00021401-0000-0000-C000-000000000046")]
+    class ShellLinkCom {}
+ 
     // Maps a file extension to the embedded icon name used in the UI
     static class FileIcon
     {
@@ -1648,8 +1711,8 @@ namespace WinExplorer
  
         public ContentPane()
         {
-            BackColor=Th.ContentBg;DoubleBuffered=true;Padding=Padding.Empty;
-            SetStyle(ControlStyles.Selectable,true);TabStop=true;AllowDrop=true;
+            BackColor=Color.White;DoubleBuffered=true;Padding=Padding.Empty;
+            SetStyle(ControlStyles.Selectable|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);TabStop=true;AllowDrop=true;
             _vsb=new VScrollBar{Dock=DockStyle.Right,Minimum=0,Visible=false};
             _vsb.ValueChanged+=(s,e)=>{_scrollY=_vsb.Value;Invalidate();};
             Controls.Add(_vsb);
@@ -1828,7 +1891,7 @@ namespace WinExplorer
                 // Always use real shell icon for executables and shortcuts
                 bool _perFile=Shell.PerFileExt.Contains(_ext2);
                 var ico=it.Icon16??(_perFile?Shell.SmallIconForced(it.FullPath??string.Empty):Shell.SmallIcon(it.FullPath??string.Empty))??Icons.Get(icoName);
-                it.Icon16=ico;
+                if(it.Icon16==null)it.Icon16=ico;
                 g.DrawImage(ico,2,y+(ROW_H-ICO)/2,ICO,ICO);
                 bool cut=_cutPaths.Contains(it.FullPath??"");
                 var nameBrush=cut?new SolidBrush(Color.FromArgb(160,0,0,0)):Brushes.Black;
@@ -1959,17 +2022,16 @@ namespace WinExplorer
         void CreateShortcut(string targetPath)
         {
             if(!Directory.Exists(CurrentPath))return;
-            string name=Path.GetFileNameWithoutExtension(targetPath)+" - Shortcut.lnk";
-            string lnkPath=Path.Combine(CurrentPath,name);
+            string nm=Path.GetFileNameWithoutExtension(targetPath)+" - Shortcut.lnk";
+            string lnk=Path.Combine(CurrentPath,nm);
+            int idx2=2; while(File.Exists(lnk))lnk=Path.Combine(CurrentPath,Path.GetFileNameWithoutExtension(targetPath)+" - Shortcut ("+(idx2++)+").lnk");
             try
             {
-                // Use WScript.Shell COM to create shortcut
-                Type t=Type.GetTypeFromProgID("WScript.Shell");
-                if(t==null)return;
-                dynamic shell=Activator.CreateInstance(t);
-                var sc=shell.CreateShortcut(lnkPath);
-                sc.TargetPath=targetPath;
-                sc.Save();
+                var sl=(IShellLinkW)new ShellLinkCom();
+                sl.SetPath(targetPath);
+                string wd=Directory.Exists(targetPath)?targetPath:(Path.GetDirectoryName(targetPath)??"");
+                sl.SetWorkingDirectory(wd);
+                ((IPersistFile)sl).Save(lnk,false);
                 LoadPath(CurrentPath,keepScroll:true);
             }
             catch(Exception ex){MessageBox.Show(ex.Message,"Shortcut Error",MessageBoxButtons.OK,MessageBoxIcon.Error);}
