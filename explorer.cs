@@ -1285,17 +1285,27 @@ namespace WinExplorer
         static readonly HashSet<string> MciFormats=new HashSet<string>(StringComparer.OrdinalIgnoreCase){".mp3",".wma",".m4a",".aac"};
  
         public AudioPanel(){BackColor=Color.FromArgb(245,248,255);DoubleBuffered=true;MouseClick+=OnClick;}
+        bool _mciReady=false;
         public void Load(string path,Image ico)
         {
-            StopAll();
+            StopAll(); _mciReady=false;
             _audPath=path;_ico=ico;_playing=false;
+            // Pre-open MCI device in background so first click is instant
+            if(path!=null&&MciFormats.Contains(Path.GetExtension(path).ToLower()))
+            {
+                string _capPath=path;
+                System.Threading.Tasks.Task.Run(()=>{
+                    int r=mciSendString("open \""+_capPath+"\" alias "+Alias,null,0,IntPtr.Zero);
+                    if(r==0){_mciReady=true;try{BeginInvoke((Action)(()=>{if(!IsDisposed)Invalidate();}));}catch{}}
+                });
+            }
             Invalidate();
         }
         void StopAll()
         {
             _sp?.Stop();_sp=null;
-            try{mciSendString($"stop {Alias}",null,0,IntPtr.Zero);}catch{}
-            try{mciSendString($"close {Alias}",null,0,IntPtr.Zero);}catch{}
+            try{mciSendString("stop "+Alias,null,0,IntPtr.Zero);}catch{}
+            try{mciSendString("close "+Alias,null,0,IntPtr.Zero);}catch{}
             _playing=false;
         }
         void OnClick(object s,MouseEventArgs e)
@@ -1309,15 +1319,15 @@ namespace WinExplorer
             }
             else if(MciFormats.Contains(ext))
             {
-                int r=mciSendString("open \""+_audPath+"\" type mpegvideo alias "+Alias,null,0,IntPtr.Zero);
-                if(r!=0)r=mciSendString("open \""+_audPath+"\" alias "+Alias,null,0,IntPtr.Zero);
-                if(r==0){mciSendString("play "+Alias,null,0,IntPtr.Zero);_playing=true;}
-                else try{Process.Start(new ProcessStartInfo(_audPath){UseShellExecute=true});}catch{}
-            }
+                if(!_mciReady){
+                    mciSendString("open \""+_audPath+"\" alias "+Alias,null,0,IntPtr.Zero);
+                    _mciReady=true;
+                }
+                if(mciSendString("play "+Alias,null,0,IntPtr.Zero)==0)_playing=true;
             else // ogg/flac/opus: open with default player
             {
                 try{Process.Start(new ProcessStartInfo(_audPath){UseShellExecute=true});}catch{}
-                return;
+                return;}
             }
             Invalidate();
         }
@@ -1348,43 +1358,102 @@ namespace WinExplorer
     // WebBrowser-based video player – works with any codec Windows has installed
     class VideoPanel:Panel
     {
-        WebBrowser _wb;
-        string _vidPath;
+        [DllImport("winmm.dll",CharSet=CharSet.Unicode)]
+        static extern int mciSendStr(string cmd,StringBuilder ret,int retLen,IntPtr hwnd);
+ 
+        const string VA="wex_v";
+        string _vidPath; bool _playing; Image _thumb; Rectangle _playBtn;
  
         public VideoPanel()
         {
-            BackColor=Color.Black;
-            _wb=new WebBrowser{Dock=DockStyle.Fill,ScriptErrorsSuppressed=true,
-                AllowNavigation=true,IsWebBrowserContextMenuEnabled=false,
-                AllowWebBrowserDrop=false,ScrollBarsEnabled=false};
-            Controls.Add(_wb);
-            _wb.DocumentText="<html><body style='background:#111'></body></html>";
+            BackColor=Color.FromArgb(20,20,20); DoubleBuffered=true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint,true);
+            MouseClick+=OnClick;
+            Resize+=(s,e)=>{if(_playing)PutWindow();};
         }
  
         public void Load(string path)
         {
-            _vidPath=path; if(_vidPath!=null){}  // suppress CS0414
-            if(string.IsNullOrEmpty(path)){_wb.DocumentText="<html><body style='background:#111'></body></html>";return;}
-            try
+            StopVid(); _vidPath=path; _playing=false; _thumb=null;
+            if(path!=null)
             {
-                // Build a URI the WebBrowser can navigate to
-                string uri=new Uri(path).AbsoluteUri;
-                string html="<!DOCTYPE html><html><head><style>"
-                    +"*{margin:0;padding:0;background:#111;overflow:hidden}"
-                    +"video{width:100vw;height:100vh;object-fit:contain}"
-                    +"</style></head><body>"
-                    +"<video controls autoplay>"
-                    +"<source src='"+uri+"'>"
-                    +"Your browser does not support the video tag."
-                    +"</video></body></html>";
-                _wb.DocumentText=html;
+                try{_thumb=Shell.Thumbnail(path,256);}catch{}
+                if(_thumb==null)_thumb=Shell.LargeIcon(path)??Icons.Get("videos");
             }
-            catch{}
+            Invalidate();
         }
  
         public void StopVid()
         {
-            try{_wb.Document?.InvokeScript("eval",new object[]{"document.querySelector('video')?.pause()"});}catch{}
+            if(!_playing)return;
+            try{mciSendStr("stop "+VA,null,0,IntPtr.Zero);}catch{}
+            try{mciSendStr("close "+VA,null,0,IntPtr.Zero);}catch{}
+            _playing=false;
+        }
+ 
+        void PutWindow()
+        {
+            try{mciSendStr("put "+VA+" window at 0 0 "+Width+" "+Height,null,0,IntPtr.Zero);}catch{}
+        }
+ 
+        void OnClick(object s,MouseEventArgs e)
+        {
+            if(_vidPath==null)return;
+            if(_playing){StopVid();Invalidate();return;}
+            if(!_playBtn.Contains(e.Location))return;
+            // Open file with MCI – let it auto-detect the codec
+            var sb=new StringBuilder(256);
+            int r=mciSendStr("open \""+_vidPath+"\" alias "+VA,sb,255,IntPtr.Zero);
+            if(r==0)
+            {
+                // Route video output to THIS panel's HWND
+                mciSendStr("window "+VA+" handle "+Handle.ToString(),null,0,IntPtr.Zero);
+                mciSendStr("put "+VA+" window at 0 0 "+Width+" "+Height,null,0,IntPtr.Zero);
+                mciSendStr("play "+VA,null,0,IntPtr.Zero);
+                _playing=true;
+            }
+            else
+            {
+                // MCI failed – open in default player
+                try{Process.Start(new ProcessStartInfo(_vidPath){UseShellExecute=true});}catch{}
+            }
+            Invalidate();
+        }
+ 
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g=e.Graphics; g.Clear(Color.FromArgb(20,20,20));
+            if(!_playing&&_thumb!=null)
+            {
+                float sc=Math.Min((float)Width/_thumb.Width,(float)Height/_thumb.Height);
+                int w=(int)(_thumb.Width*sc),h=(int)(_thumb.Height*sc);
+                g.DrawImage(_thumb,(Width-w)/2,(Height-h)/2,w,h);
+            }
+            int bx=Width/2-18,by=Math.Max(4,Height-46);
+            _playBtn=new Rectangle(bx-4,by-4,44,38);
+            using(var bb=new SolidBrush(Color.FromArgb(190,0,0,0)))g.FillEllipse(bb,bx,by,36,30);
+            if(!_playing)g.FillPolygon(Brushes.White,new[]{new Point(bx+10,by+6),new Point(bx+10,by+24),new Point(bx+27,by+15)});
+            else{g.FillRectangle(Brushes.White,bx+8,by+7,5,16);g.FillRectangle(Brushes.White,bx+19,by+7,5,16);}
+            string lbl=_vidPath!=null?Path.GetFileName(_vidPath)+(_playing?" – Click to stop":" – Click to play"):"";
+            if(lbl.Length>0)using(var fmt=new StringFormat{Alignment=StringAlignment.Center})
+                g.DrawString(lbl,Th.UiSmall,new SolidBrush(Color.FromArgb(180,255,255,255)),new RectangleF(0,by+36,Width,18),fmt);
+        }
+    }
+ 
+    class PropBox:Panel
+    {
+        public TextBox TB;
+        public PropBox()
+        {
+            Height=18; Padding=new Padding(1,1,1,1); BackColor=Color.White;
+            TB=new TextBox{BorderStyle=BorderStyle.None,Dock=DockStyle.Fill,Font=Th.UiFont,ReadOnly=true,BackColor=Color.White,Height=16};
+            Controls.Add(TB);
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            int w=Width-1,h=Height-1;
+            using(var p=new Pen(Color.FromArgb(0x99,0x99,0x99))){e.Graphics.DrawLine(p,0,0,w,0);e.Graphics.DrawLine(p,0,0,0,h);}
+            using(var p=new Pen(Color.FromArgb(0xE6,0xE6,0xE6))){e.Graphics.DrawLine(p,w,0,w,h);e.Graphics.DrawLine(p,0,h,w,h);}
         }
     }
  
@@ -1397,7 +1466,8 @@ namespace WinExplorer
         PictureBox _picBox; RichTextBox _txtBox; RichTextBox _rawTxtBox; HexPanel _hexPanel; ObjPanel _objPanel; AudioPanel _audioPanel; VideoPanel _vidPanel; Label _iconLbl;
         bool _showHex; Control _activePreview;
  
-        Label _lbName; TextBox _tbType,_tbPath,_tbModified,_tbSize;
+        PropBox _pbType,_pbPath,_pbModified,_pbSize;
+        TextBox _tbType,_tbPath,_tbModified,_tbSize; // inner TBs
  
         public PreviewPane()
         {
@@ -1443,22 +1513,23 @@ namespace WinExplorer
             // ── info panel ─────────────────────────────────────────────────
             _info=new Panel{Dock=DockStyle.Fill,BackColor=Th.PreviewBg,Padding=new Padding(8,6,8,6)};
             _info.Paint+=PaintInfoSep;
-            _lbName=new Label{Dock=DockStyle.Top,Height=28,Font=Th.UiBold,AutoSize=false,TextAlign=ContentAlignment.MiddleLeft,ForeColor=Color.Black};
             // two-column grid: label (Black) + read-only TextBox for value
             var _grid=new TableLayoutPanel{Dock=DockStyle.Top,Height=120,ColumnCount=2,RowCount=4,Padding=new Padding(0,4,0,0),BackColor=Color.Transparent};
             _grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,88f));
             _grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100f));
-            for(int _ri=0;_ri<4;_ri++)_grid.RowStyles.Add(new RowStyle(SizeType.Absolute,28f));
-            string[]_pn={"Type","Location","Modified","Size"};
-            var _pvArr=new TextBox[4];
+            for(int _ri=0;_ri<4;_ri++)_grid.RowStyles.Add(new RowStyle(SizeType.Absolute,22f));
+            string[]_pn={"Type","Location","Modified","Size"}; // no colon per spec
+            var _pvArr=new PropBox[4];
             for(int _i=0;_i<4;_i++){
-                var _pl=new Label{Text=_pn[_i]+":",TextAlign=ContentAlignment.MiddleLeft,ForeColor=Color.Black,Font=Th.UiFont,Dock=DockStyle.Fill,Margin=Padding.Empty};
-                var _pt=new TextBox{ReadOnly=true,BorderStyle=BorderStyle.FixedSingle,BackColor=Color.White,Font=Th.UiFont,Dock=DockStyle.Fill,Margin=new Padding(0,2,2,2)};
-                _grid.Controls.Add(_pl,0,_i); _grid.Controls.Add(_pt,1,_i);
-                _pvArr[_i]=_pt;
+                var _pl=new Label{Text=_pn[_i],TextAlign=ContentAlignment.MiddleLeft,ForeColor=Color.Black,Font=Th.UiFont,Dock=DockStyle.Fill,Margin=Padding.Empty};
+                var _pb2=new PropBox{Dock=DockStyle.Fill,Margin=new Padding(0,2,4,2)};
+                _grid.Controls.Add(_pl,0,_i); _grid.Controls.Add(_pb2,1,_i);
+                _pvArr[_i]=_pb2;
             }
-            _tbType=_pvArr[0]; _tbPath=_pvArr[1]; _tbModified=_pvArr[2]; _tbSize=_pvArr[3];
-            _info.Controls.Add(_grid); _info.Controls.Add(new Panel{Dock=DockStyle.Top,Height=1,BackColor=Th.HdrBorder}); _info.Controls.Add(_lbName);
+            _pbType=_pvArr[0]; _pbPath=_pvArr[1]; _pbModified=_pvArr[2]; _pbSize=_pvArr[3];
+            // convenience aliases for the inner TextBoxes
+            _tbType=_pbType.TB; _tbPath=_pbPath.TB; _tbModified=_pbModified.TB; _tbSize=_pbSize.TB;
+            _info.Controls.Add(_grid);
  
             Controls.Add(_info); Controls.Add(_top);
  
@@ -1489,11 +1560,11 @@ namespace WinExplorer
         public void ShowItem(ContentItem item)
         {
             if(item==null){Clear();return;}
-            _lbName.Text  =item.Name; if(_tabNameLbl!=null)_tabNameLbl.Text=item.Name;
-            _tbType.Text    =item.IsDirectory?"File folder":item.ItemType;
-            _tbPath.Text    =item.FullPath!=null?Path.GetDirectoryName(item.FullPath)??"":"";
-            _tbModified.Text=item.DateStr;
-            _tbSize.Text    =item.IsDirectory?"":item.SizeStr;
+            if(_tabNameLbl!=null)_tabNameLbl.Text=item.Name;
+            _pbType.TB.Text =item.IsDirectory?"File folder":item.ItemType;
+            _pbPath.TB.Text =item.FullPath!=null?Path.GetDirectoryName(item.FullPath)??"":"";
+            _pbModified.TB.Text=item.DateStr;
+            _pbSize.TB.Text =item.IsDirectory?"":item.SizeStr;
  
             _hexPanel.Load(item.FullPath);
             // Plain UTF-8 text tab – lazy 128 KB read
@@ -1580,7 +1651,7 @@ namespace WinExplorer
  
         public void Clear()
         {
-            _lbName.Text=""; if(_tabNameLbl!=null)_tabNameLbl.Text=""; _tbType.Text=""; _tbPath.Text=""; _tbModified.Text=""; _tbSize.Text="";
+            if(_tabNameLbl!=null)_tabNameLbl.Text=""; _tbType.Text=""; _tbPath.Text=""; _tbModified.Text=""; _tbSize.Text="";
             _iconLbl.Image=null; _iconLbl.Text="No selection"; _picBox.Image=null; _txtBox.Text=""; _rawTxtBox.Text="";
             _activePreview=_iconLbl; ShowCtrl(_iconLbl);
         }
@@ -1722,6 +1793,8 @@ namespace WinExplorer
             return Map.TryGetValue(ext,out var n)?n:"file";
         }
     }
+ 
+ 
     class ContentPane:Panel
     {
         const int HDR_H=25,ROW_H=22,ICO=16,DIV=4,ITEM_INDENT=15,HDR_INDENT=1;
@@ -1935,7 +2008,7 @@ namespace WinExplorer
                 var it=_items[i]; int y=HDR_H+i*ROW_H-_scrollY;
                 if(y+ROW_H<=HDR_H)continue; if(y>Height)break;
                 bool sel=_sel.Contains(i),hov=i==_hovRow,dndHov=i==_dndHovRow;
-                var row=new Rectangle(0,y,tw,ROW_H-1);
+                var row=new Rectangle(ITEM_INDENT,y,Math.Max(0,tw-ITEM_INDENT),ROW_H-1);
                 if(sel){if(_focused)Th.FillSel(g,row);else if(it.IsDirectory){using(var b=new SolidBrush(Th.InactiveDirFill))g.FillRectangle(b,row);}else{using(var p2=new Pen(Th.SelBorder))g.DrawRectangle(p2,row.X,row.Y,row.Width-1,row.Height-1);}}
                 else if(hov||dndHov){Th.FillHover(g,row);if(dndHov)using(var p2=new Pen(Th.SelBorder))g.DrawRectangle(p2,row.X,row.Y,row.Width-1,row.Height-1);}
                 // Resolve per-file-type icon; shell overrides when system_icons==1
