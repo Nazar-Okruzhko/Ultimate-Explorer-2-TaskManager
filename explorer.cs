@@ -1623,11 +1623,11 @@ namespace WinExplorer
             string exe7z=Path.Combine(Path.GetDirectoryName(Application.ExecutablePath)??"","7z.exe");
             if(!File.Exists(exe7z))exe7z=@"C:\Program Files\7-Zip\7z.exe";
             if(File.Exists(exe7z))
-                try{Process.Start(new ProcessStartInfo(exe7z,$"x "{archive}" -o"{dest}" -y"){UseShellExecute=false,CreateNoWindow=true})?.WaitForExit();MessageBox.Show("Extracted via 7-Zip.","Extract",MessageBoxButtons.OK,MessageBoxIcon.Information);return;}catch{}
+                try { Process.Start(new ProcessStartInfo(exe7z, $"x \"{archive}\" -o\"{dest}\" -y") { UseShellExecute = false, CreateNoWindow = true })?.WaitForExit(); MessageBox.Show("Extracted via 7-Zip.", "Extract", MessageBoxButtons.OK, MessageBoxIcon.Information); return; } catch { }
             // Try WinRAR
             string rar=@"C:\Program Files\WinRAR\WinRAR.exe";
             if(File.Exists(rar))
-                try{Process.Start(new ProcessStartInfo(rar,$"x "{archive}" "{dest}\\""){UseShellExecute=true})?.WaitForExit();return;}catch{}
+                try{Process.Start(new ProcessStartInfo(rar,$"x \"{archive}\" \"{dest}\\\""){UseShellExecute=true})?.WaitForExit();return;}catch{}
             MessageBox.Show("Install 7-Zip or WinRAR to extract this archive type.","Extract",MessageBoxButtons.OK,MessageBoxIcon.Information);
         }
         protected override void OnPaint(PaintEventArgs e)
@@ -2576,7 +2576,7 @@ namespace WinExplorer
                 // Try ffmpeg if available
                 string ffmpeg=Path.Combine(Path.GetDirectoryName(Application.ExecutablePath)??"","ffmpeg.exe");
                 if(File.Exists(ffmpeg))
-                    Process.Start(new ProcessStartInfo(ffmpeg,$"-i "{src2}" "{outPath}""){UseShellExecute=false,CreateNoWindow=true})?.WaitForExit();
+                    Process.Start(new ProcessStartInfo(ffmpeg,$"-i \"{src2}\" \"{outPath}\""){UseShellExecute=false,CreateNoWindow=true})?.WaitForExit();
                 else
                     MessageBox.Show("ffmpeg.exe not found. Place it next to the application to enable audio conversion.","Convert",MessageBoxButtons.OK,MessageBoxIcon.Information);
                 LoadPath(CurrentPath,keepScroll:true);
