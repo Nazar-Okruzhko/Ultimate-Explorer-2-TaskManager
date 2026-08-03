@@ -462,7 +462,9 @@ namespace WinExplorer
         public string CurrentPath{get=>_path.Text;set=>_path.Text=value;}
         public bool BackEnabled{set{_backOn=value;Invalidate();}}
         public bool ForwardEnabled{set{_fwdOn=value;Invalidate();}}
+#pragma warning disable CS0067
         public event EventHandler BackClick,ForwardClick,UpClick,ReloadClick;
+#pragma warning restore CS0067
         string _srchPlaceholder="Search";
         ToolTip _tip=new ToolTip{AutoPopDelay=5000,InitialDelay=600,ReshowDelay=200,ShowAlways=true};
         string _tipText="";
@@ -1324,10 +1326,12 @@ namespace WinExplorer
                     _mciReady=true;
                 }
                 if(mciSendString("play "+Alias,null,0,IntPtr.Zero)==0)_playing=true;
+                else try{Process.Start(new ProcessStartInfo(_audPath){UseShellExecute=true});}catch{}
+            }
             else // ogg/flac/opus: open with default player
             {
                 try{Process.Start(new ProcessStartInfo(_audPath){UseShellExecute=true});}catch{}
-                return;}
+                return;
             }
             Invalidate();
         }
