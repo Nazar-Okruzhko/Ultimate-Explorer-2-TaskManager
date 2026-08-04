@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-//  WINDOWS EXPLORER    GDI+ Recreation  v3
+//  WINDOWS EXPLORER  ?  GDI+ Recreation  v3
 //  .NET Framework 4.8  |  Single File
 // ---------------------------------------------------------------------------
 //  Icons  ?  16×16 PNG files in  <exe-dir>\icons\Win10\
@@ -150,7 +150,7 @@ namespace WinExplorer
         static string Key(string path)
         {
             if (path == null) return "";
-            // Special folders each have a unique icon  key by path, not generic "__dir__"
+            // Special folders each have a unique icon ? key by path, not generic "__dir__"
             if (Directory.Exists(path)) return "dir:" + path.ToLower();
             string ext = Path.GetExtension(path).ToLower();
             // Per-file types (exe/lnk/ico etc.) each have a unique icon – key by full path
@@ -562,8 +562,7 @@ namespace WinExplorer
                 if(img==null)img=Icons.Get(ico);
                 int ix=r.X+(r.Width-ICO)/2,iy=r.Y+(r.Height-ICO)/2;
                 if(!en){// draw semi-transparent
-                    float[][] cm = new float[][] { new float[] { 1,0,0,0,0 }, new float[] { 0,1,0,0,0 }, new float[] { 0,0,1,0,0 }, new float[] { 0,0,0,0.35f,0 }, new float[] { 0,0,0,0,1 } };
-                    var ia=new ImageAttributes();ia.SetColorMatrix(new ColorMatrix(cm));
+                    var ia=new ImageAttributes();ia.SetColorMatrix(new ColorMatrix(new float[][]{new float[]{1f,0f,0f,0f,0f},new float[]{0f,1f,0f,0f,0f},new float[]{0f,0f,1f,0f,0f},new float[]{0f,0f,0f,0.35f,0f},new float[]{0f,0f,0f,0f,1f}}));
                     g.DrawImage(img,new Rectangle(ix,iy,ICO,ICO),0,0,img.Width,img.Height,GraphicsUnit.Pixel,ia);
                     ia.Dispose();
                 } else {
@@ -809,7 +808,7 @@ namespace WinExplorer
                 // Item icon
                 var ico=Shell.SmallIcon(n.Path??string.Empty)??Icons.Get(n.IconName??"folder");
                 g.DrawImage(ico,indent+ARW,y+(ROW_H-ICO)/2,ICO,ICO);
-                // Label  clip right if pinned icon present
+                // Label ? clip right if pinned icon present
                 float labelW=n.IsPinned?lw-indent-ARW-ICO-22:lw-indent-ARW-ICO-5;
                 var rf=new RectangleF(indent+ARW+ICO+3,y+1,Math.Max(1,labelW),ROW_H-2);
                 g.DrawString(n.Label,Th.UiFont,Brushes.Black,rf,sf);
@@ -821,7 +820,7 @@ namespace WinExplorer
                 }
             }
             greyBrush.Dispose(); sf.Dispose();
-            // no vertical separator  gap is handled by SplitterBar
+            // no vertical separator ? gap is handled by SplitterBar
         }
         static void DrawTri(Graphics g,int cx,int cy,bool open)
         {g.SmoothingMode=SmoothingMode.AntiAlias;Point[]pts=open?new[]{new Point(cx-4,cy-2),new Point(cx+4,cy-2),new Point(cx,cy+3)}:new[]{new Point(cx-2,cy-4),new Point(cx-2,cy+4),new Point(cx+3,cy)};using(var b=new SolidBrush(Color.FromArgb(100,100,100)))g.FillPolygon(b,pts);g.SmoothingMode=SmoothingMode.Default;}
@@ -1204,7 +1203,7 @@ namespace WinExplorer
         {
             var g=e.Graphics;
             g.Clear(Color.FromArgb(240,240,240));
-            if(_v.Count==0){g.DrawString("No model loaded  drag an .obj/.stl/.ply file here",Th.UiSmall,new SolidBrush(Color.FromArgb(140,140,140)),4,4);return;}
+            if(_v.Count==0){g.DrawString("No model loaded ? drag an .obj/.stl/.ply file here",Th.UiSmall,new SolidBrush(Color.FromArgb(140,140,140)),4,4);return;}
             g.SmoothingMode=SmoothingMode.AntiAlias;
  
             float cx=Width/2f,cy=Height/2f;
@@ -1282,7 +1281,7 @@ namespace WinExplorer
                 g.DrawString(_fmtLabel,Th.UiSmall,new SolidBrush(Color.FromArgb(130,130,130)),3,Height-16);
  
             // Hint text
-            g.DrawString("Drag to rotate    Scroll to zoom",Th.UiSmall,new SolidBrush(Color.FromArgb(150,150,150)),3,3);
+            g.DrawString("Drag to rotate  ?  Scroll to zoom",Th.UiSmall,new SolidBrush(Color.FromArgb(150,150,150)),3,3);
         }
  
         // -- Vector helpers -------------------------------------------------
@@ -1386,7 +1385,7 @@ namespace WinExplorer
     //  PREVIEW PANE  (360 px wide)
     //  Top 256 px: file content  |  Bottom: file info
     // -------------------------------------------------------------------------
-    // WebBrowser-based video player  works with any codec Windows has installed
+    // WebBrowser-based video player ? works with any codec Windows has installed
     class VideoPanel:Panel
     {
         [DllImport("winmm.dll",CharSet=CharSet.Unicode)]
@@ -1432,7 +1431,7 @@ namespace WinExplorer
             if(_vidPath==null)return;
             if(_playing){StopVid();Invalidate();return;}
             if(!_playBtn.Contains(e.Location))return;
-            // Open file with MCI  let it auto-detect the codec
+            // Open file with MCI ? let it auto-detect the codec
             var sb=new StringBuilder(256);
             int r=mciSendStr("open \""+_vidPath+"\" alias "+VA,sb,255,IntPtr.Zero);
             if(r==0)
@@ -1445,7 +1444,7 @@ namespace WinExplorer
             }
             else
             {
-                // MCI failed  open in default player
+                // MCI failed ? open in default player
                 try{Process.Start(new ProcessStartInfo(_vidPath){UseShellExecute=true});}catch{}
             }
             Invalidate();
@@ -1465,7 +1464,7 @@ namespace WinExplorer
             using(var bb=new SolidBrush(Color.FromArgb(190,0,0,0)))g.FillEllipse(bb,bx,by,36,30);
             if(!_playing)g.FillPolygon(Brushes.White,new[]{new Point(bx+10,by+6),new Point(bx+10,by+24),new Point(bx+27,by+15)});
             else{g.FillRectangle(Brushes.White,bx+8,by+7,5,16);g.FillRectangle(Brushes.White,bx+19,by+7,5,16);}
-            string lbl=_vidPath!=null?Path.GetFileName(_vidPath)+(_playing?"  Click to stop":"  Click to play"):"";
+            string lbl=_vidPath!=null?Path.GetFileName(_vidPath)+(_playing?" ? Click to stop":" ? Click to play"):"";
             if(lbl.Length>0)using(var fmt=new StringFormat{Alignment=StringAlignment.Center})
                 g.DrawString(lbl,Th.UiSmall,new SolidBrush(Color.FromArgb(180,255,255,255)),new RectangleF(0,by+36,Width,18),fmt);
         }
@@ -1699,7 +1698,7 @@ namespace WinExplorer
             tabs.Controls.Add(_btnTxt);
             tabs.Controls.Add(_btnHex);
             _btnPrev.Click+=(s,e)=>SetHex(false); _btnHex.Click+=(s,e)=>SetHex(true);
-            // _btnTxt wired after Build()  see constructor below
+            // _btnTxt wired after Build() ? see constructor below
             _top.Controls.Add(tabs);
             // content area
             _content=new Panel{Dock=DockStyle.Fill,Padding=new Padding(0,20,0,0),BackColor=Color.White};
@@ -1774,7 +1773,7 @@ namespace WinExplorer
             _pbSize.TB.Text =item.IsDirectory?"":item.SizeStr;
  
             _hexPanel.Load(item.FullPath);
-            // Plain UTF-8 text tab  lazy 128 KB read
+            // Plain UTF-8 text tab ? lazy 128 KB read
             System.Threading.Tasks.Task.Run(()=>
             {
                 string result="";
@@ -1784,7 +1783,7 @@ namespace WinExplorer
                     {
                         var buf=new char[128*1024]; int read=sr.Read(buf,0,buf.Length);
                         result=new string(buf,0,read);
-                        if(!sr.EndOfStream)result+="\n\n... [first 128 KB shown  file is larger] ...";
+                        if(!sr.EndOfStream)result+="\n\n... [first 128 KB shown ? file is larger] ...";
                     }
                 }
                 catch(Exception ex){result="(error reading file: "+ex.Message+")";}
@@ -1873,7 +1872,34 @@ namespace WinExplorer
                 // Folders: try shell thumbnail (content stack) then generic large icon
                 // Try _256.png embedded icon, then shell thumbnail, then scaled-up embedded
                 string icoN2=item.IsDirectory?"folder":FileIcon.Get(ext);
-                Image thumb=Icons.GetLarge(icoN2);         // embedded _256.png or scaled regular
+                Image thumb=null;
+                // EXE/LNK/ICO/COM: load their own embedded icon at maximum resolution
+                if(!item.IsDirectory&&Shell.PerFileExt.Contains(ext)&&item.FullPath!=null)
+                {
+                    // Try 256x256 shell thumbnail first (preserves full-res embedded icon)
+                    thumb=Shell.Thumbnail(item.FullPath,256);
+                    if(thumb==null)
+                    {
+                        // Extract icon directly at largest size
+                        try
+                        {
+                            using(var ico2=Icon.ExtractAssociatedIcon(item.FullPath))
+                            if(ico2!=null)
+                            {
+                                // Try to get the largest available variant by loading from ICO data
+                                using(var ms3=new MemoryStream())
+                                {
+                                    ico2.Save(ms3); ms3.Position=0;
+                                    using(var bmp=new Bitmap(ms3))
+                                        thumb=new Bitmap(bmp,new Size(Math.Min(bmp.Width,256),Math.Min(bmp.Height,256)));
+                                }
+                            }
+                        }
+                        catch{}
+                    }
+                    if(thumb==null)thumb=Shell.LargeIcon(item.FullPath);
+                }
+                if(thumb==null)thumb=Icons.GetLarge(icoN2);         // embedded _256.png or scaled regular
                 if(thumb==null)thumb=Shell.Thumbnail(item.FullPath??string.Empty,256);
                 if(thumb==null)thumb=Shell.LargeIcon(item.FullPath??string.Empty);
                 _iconLbl.Image=thumb; _iconLbl.ImageAlign=ContentAlignment.MiddleCenter; _iconLbl.Text="";
@@ -2011,11 +2037,11 @@ namespace WinExplorer
             {".mp3","music"},{".wav","music"},{".flac","music"},{".ogg","music"},
             {".aac","music"},{".m4a","music"},{".wma","music"},{".opus","music"},
             {".ape","music"},{".aiff","music"},{".aif","music"},
-            // Video  unique per-format icon where available
+            // Video ? unique per-format icon where available
             {".mp4","mp4"},{".mkv","mkv"},{".avi","videos"},{".mov","videos"},
             {".wmv","videos"},{".flv","videos"},{".webm","videos"},{".mpg","videos"},
             {".mpeg","videos"},{".m4v","videos"},{".3gp","videos"},
-            // Image  unique per-format icon where available, fallback to pictures
+            // Image ? unique per-format icon where available, fallback to pictures
             {".png","png"},{".jpg","jpg"},{".jpeg","jpg"},{".bmp","bmp"},
             {".gif","gif"},{".tiff","pictures"},{".tif","pictures"},{".webp","pictures"},
             {".ico","ico"},{".svg","svg"},{".dds","dds"},{".tga","tga"},{".pcx","pcx"},
@@ -2029,6 +2055,16 @@ namespace WinExplorer
         {
             if(string.IsNullOrEmpty(ext))return"file";
             return Map.TryGetValue(ext,out var n)?n:"file";
+        }
+        public static string GetType(string ext){
+            if(string.IsNullOrEmpty(ext))return "File";
+            ext=ext.ToLower();
+            if(ext==".exe")return "Application";
+            if(ext==".lnk")return "Shortcut";
+            if(ext==".zip")return "ZIP archive";
+            if(ext==".rar")return "RAR archive";
+            if(ext==".7z")return "7-Zip archive";
+            return ext.TrimStart('.')+" File";
         }
     }
  
@@ -2059,6 +2095,10 @@ namespace WinExplorer
         List<ContentItem> _allItems=new List<ContentItem>();
         public event Action<ContentItem> SelectionChanged;
         HashSet<string> _cutPaths=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Archive browsing state
+        public string ArchivePath{get;private set;}=null;   // null = real FS; non-null = inside archive
+        public string ArchiveSub{get;private set;}="";       // current subdirectory inside archive
+        public bool InArchive=>ArchivePath!=null;
  
         public ContentPane()
         {
@@ -2109,6 +2149,7 @@ namespace WinExplorer
         public void LoadPath(string path,bool keepScroll=false)
         {
             CancelRename();
+            ArchivePath=null; ArchiveSub="";
             CurrentPath=path; _searchMode=false; _searchQuery="";
             _sel.Clear(); _lastSel=-1;
             int saved=keepScroll?_scrollY:0;
@@ -2152,6 +2193,121 @@ namespace WinExplorer
                 catch{}
             });
         }
+ 
+        // ---- Archive virtual browsing ----------------------------------------
+        public void LoadArchive(string archivePath,string subPath)
+        {
+            CancelRename(); ArchivePath=archivePath; ArchiveSub=subPath??="";
+            CurrentPath=archivePath+(subPath.Length>0?"|"+subPath:"");
+            _sel.Clear(); _lastSel=-1; _scrollY=0; _hovRow=-1;
+            _items.Clear(); _allItems.Clear();
+            string ext=Path.GetExtension(archivePath).ToLower();
+            // Add ".." parent entry unless we are at archive root
+            if(subPath.Length>0)
+            {
+                _items.Add(new ContentItem{Name="..",IsDirectory=true,
+                    FullPath="__archive_up__",ItemType="Parent folder",DateModified=DateTime.MinValue});
+            }
+            if(ext==".zip")PopulateFromZip(archivePath,subPath);
+            else PopulateFromExternal(archivePath,subPath);
+            _allItems=new List<ContentItem>(_items);
+            SortItems(); UpdateScroll(); Invalidate();
+            SelectionChanged?.Invoke(FirstSelected);
+        }
+        void PopulateFromZip(string archivePath,string subPath)
+        {
+            try
+            {
+                using(var za=ZipFile.OpenRead(archivePath))
+                {
+                    var prefix=subPath.Length>0?subPath.Replace('\\','/')+"/":" ";
+                    var seen=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach(var entry in za.Entries)
+                    {
+                        string fn=entry.FullName.Replace('\\','/');
+                        string rel=subPath.Length>0&&fn.StartsWith(prefix,StringComparison.OrdinalIgnoreCase)?fn.Substring(prefix.Length):
+                                   subPath.Length==0?fn:null;
+                        if(rel==null||rel.Length==0)continue;
+                        int slash=rel.IndexOf('/');
+                        if(slash>0)
+                        {
+                            string dirName=rel.Substring(0,slash);
+                            if(!seen.Contains(dirName)){seen.Add(dirName);
+                                _items.Add(new ContentItem{Name=dirName,IsDirectory=true,
+                                    FullPath=archivePath+"|"+(subPath.Length>0?subPath+"/":"")+dirName,
+                                    ItemType="File folder",DateModified=entry.LastWriteTime.DateTime});}
+                        }
+                        else if(slash<0)
+                        {
+                            _items.Add(new ContentItem{Name=rel,IsDirectory=false,
+                                FullPath=archivePath+"|"+(subPath.Length>0?subPath+"/":"")+rel,
+                                Size=entry.Length,ItemType=FileIcon.GetType(Path.GetExtension(rel)),
+                                DateModified=entry.LastWriteTime.DateTime});
+                        }
+                    }
+                }
+            }
+            catch(Exception ex){_items.Add(new ContentItem{Name="(Error: "+ex.Message+")",IsDirectory=false,FullPath="",ItemType=""});}
+        }
+        void PopulateFromExternal(string archivePath,string subPath)
+        {
+            // Use 7z.exe to list archive contents
+            string exe7z=Path.Combine(Path.GetDirectoryName(Application.ExecutablePath)??"","7z.exe");
+            if(!File.Exists(exe7z))exe7z=@"C:\Program Files\7-Zip\7z.exe";
+            if(!File.Exists(exe7z)){_items.Add(new ContentItem{Name="(Install 7-Zip to browse this archive)",IsDirectory=false,FullPath="",ItemType=""});return;}
+            try
+            {
+                var psi=new ProcessStartInfo(exe7z,"l -slt \""+archivePath+"\""){UseShellExecute=false,RedirectStandardOutput=true,CreateNoWindow=true};
+                var proc=Process.Start(psi); string output=proc.StandardOutput.ReadToEnd(); proc.WaitForExit();
+                var prefix=subPath.Length>0?subPath.Replace('\\','/')+"/":"";
+                var seen=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                string curPath=null; bool curIsDir=false; long curSize=0; DateTime curDate=DateTime.MinValue;
+                foreach(var rawLine in output.Split('\n'))
+                {
+                    string line=rawLine.TrimEnd();
+                    if(line.StartsWith("Path = ")){curPath=line.Substring(7).Replace('\\','/');curIsDir=false;curSize=0;}
+                    else if(line.StartsWith("Folder = ")){curIsDir=line.Substring(9).Trim()=="+";}
+                    else if(line.StartsWith("Size = "))long.TryParse(line.Substring(7).Trim(),out curSize);
+                    else if(line.StartsWith("Modified = "))DateTime.TryParse(line.Substring(11).Trim(),out curDate);
+                    else if(line.Length==0&&curPath!=null)
+                    {
+                        string fn=curPath; curPath=null;
+                        string rel=prefix.Length>0&&fn.StartsWith(prefix,StringComparison.OrdinalIgnoreCase)?fn.Substring(prefix.Length):
+                                   prefix.Length==0?fn:null;
+                        if(rel==null||rel.Length==0){continue;}
+                        int slash=rel.IndexOf('/');
+                        if(slash>0){string dn=rel.Substring(0,slash);if(!seen.Contains(dn)){seen.Add(dn);_items.Add(new ContentItem{Name=dn,IsDirectory=true,FullPath=archivePath+"|"+(subPath.Length>0?subPath+"/":"")+dn,ItemType="File folder",DateModified=curDate});}}
+                        else if(slash<0){_items.Add(new ContentItem{Name=rel,IsDirectory=false,FullPath=archivePath+"|"+(subPath.Length>0?subPath+"/":"")+rel,Size=curSize,ItemType=FileIcon.GetType(Path.GetExtension(rel)),DateModified=curDate});}
+                    }
+                }
+            }
+            catch(Exception ex){_items.Add(new ContentItem{Name="(Error: "+ex.Message+")",IsDirectory=false,FullPath="",ItemType=""});}
+        }
+        // Extract a single archive entry to a temp file and return its path (for opening)
+        public static string ExtractEntryToTemp(string archivePath,string internalPath)
+        {
+            string tmpDir=Path.Combine(Path.GetTempPath(),"WinExplorer_arch_"+Path.GetFileNameWithoutExtension(archivePath));
+            Directory.CreateDirectory(tmpDir);
+            string outFile=Path.Combine(tmpDir,Path.GetFileName(internalPath));
+            string ext=Path.GetExtension(archivePath).ToLower();
+            if(ext==".zip")
+            {
+                using(var za=ZipFile.OpenRead(archivePath))
+                {
+                    var key=internalPath.Replace('\\','/');
+                    var entry=za.Entries.FirstOrDefault(x=>string.Equals(x.FullName.Replace('\\','/'),key,StringComparison.OrdinalIgnoreCase));
+                    entry?.ExtractToFile(outFile,true);
+                }
+            }
+            else
+            {
+                string exe7z=Path.Combine(Path.GetDirectoryName(Application.ExecutablePath)??"","7z.exe");
+                if(!File.Exists(exe7z))exe7z=@"C:\Program Files\7-Zip\7z.exe";
+                if(File.Exists(exe7z))
+                    Process.Start(new ProcessStartInfo(exe7z,"e \""+archivePath+"\" \""+internalPath+"\" -o\""+tmpDir+"\" -y"){UseShellExecute=false,CreateNoWindow=true})?.WaitForExit();
+            }
+            return File.Exists(outFile)?outFile:null;
+        }
         public void SelectAll(){for(int i=0;i<_items.Count;i++)_sel.Add(i);Invalidate();}
         public void LoadPathAndRename(string path,string nameToSelect)
         {
@@ -2187,9 +2343,62 @@ namespace WinExplorer
         public void PasteFromClipboard()
         {
             if(!Clipboard.ContainsFileDropList()||!Directory.Exists(CurrentPath))return;
+            var data2=Clipboard.GetDataObject();
+            // Detect Cut (Move) vs Copy
+            bool isCut=false;
+            if(data2?.GetData("Preferred DropEffect") is MemoryStream ms2)
+            {
+                var b=new byte[4]; ms2.Read(b,0,4);
+                isCut=((DragDropEffects)BitConverter.ToInt32(b,0)&DragDropEffects.Move)!=0;
+            }
             var files=Clipboard.GetFileDropList();
-            foreach(string src in files)try{string name=Path.GetFileName(src);string dst=Path.Combine(CurrentPath,name);if(File.Exists(src))File.Copy(src,dst,false);else if(Directory.Exists(src))CopyDir(src,dst);}catch(Exception ex){MessageBox.Show(ex.Message,"Paste Error",MessageBoxButtons.OK,MessageBoxIcon.Error);}
-            LoadPath(CurrentPath);
+            bool anyPasted=false;
+            foreach(string fsrc in files)
+            {
+                try
+                {
+                    string name=Path.GetFileName(fsrc);
+                    string destDir=CurrentPath;
+                    string srcDir=Path.GetDirectoryName(fsrc)??"";
+                    bool sameDir=string.Equals(srcDir,destDir,StringComparison.OrdinalIgnoreCase);
+                    // Cut to same folder = no-op
+                    if(isCut&&sameDir)continue;
+                    string dst=Path.Combine(destDir,name);
+                    if(isCut)
+                    {
+                        // Move: if dst exists and not same file, error as usual
+                        if(File.Exists(dst)||Directory.Exists(dst))
+                            dst=UniqueCopyPath(destDir,name,false);
+                        if(File.Exists(fsrc))File.Move(fsrc,dst);
+                        else if(Directory.Exists(fsrc))Directory.Move(fsrc,dst);
+                    }
+                    else
+                    {
+                        if(sameDir||(File.Exists(dst)||Directory.Exists(dst)))
+                            dst=UniqueCopyPath(destDir,name,true);
+                        if(File.Exists(fsrc))File.Copy(fsrc,dst,false);
+                        else if(Directory.Exists(fsrc))CopyDir(fsrc,dst);
+                    }
+                    anyPasted=true;
+                }
+                catch(Exception ex){MessageBox.Show(ex.Message,"Paste Error",MessageBoxButtons.OK,MessageBoxIcon.Error);}
+            }
+            if(anyPasted||true)LoadPath(CurrentPath);
+        }
+        static string UniqueCopyPath(string dir,string nameWithExt,bool addCopySuffix)
+        {
+            string baseName=Path.GetFileNameWithoutExtension(nameWithExt);
+            string ext=Path.GetExtension(nameWithExt);
+            // If addCopySuffix, start with " - Copy"; otherwise just try numbered variants
+            string candidate=addCopySuffix?Path.Combine(dir,baseName+" - Copy"+ext):Path.Combine(dir,nameWithExt);
+            if(!File.Exists(candidate)&&!Directory.Exists(candidate))return candidate;
+            // Try " - Copy (2)", " - Copy (3)", ...
+            string copyBase=addCopySuffix?baseName+" - Copy":baseName;
+            for(int n=2;;n++)
+            {
+                candidate=Path.Combine(dir,copyBase+" ("+n+")"+ext);
+                if(!File.Exists(candidate)&&!Directory.Exists(candidate))return candidate;
+            }
         }
         public void DeleteSelected()
         {
@@ -2273,8 +2482,9 @@ namespace WinExplorer
                 string _ext2=Path.GetExtension(it.Name??string.Empty).ToLower();
                 string icoName=it.IsDirectory?"folder":FileIcon.Get(_ext2);
                 // Always use real shell icon for executables and shortcuts
-                bool _perFile=Shell.PerFileExt.Contains(_ext2);
-                var ico=it.Icon16??(_perFile?Shell.SmallIconForced(it.FullPath??string.Empty):Shell.SmallIcon(it.FullPath??string.Empty))??Icons.Get(icoName);
+                bool _inArchiveVirt=(it.FullPath??"").Contains("|")||(it.FullPath??"")=="__archive_up__";
+                bool _perFile=Shell.PerFileExt.Contains(_ext2)&&!_inArchiveVirt;
+                var ico=it.Icon16??(_perFile?Shell.SmallIconForced(it.FullPath??string.Empty):(_inArchiveVirt?null:Shell.SmallIcon(it.FullPath??string.Empty)))??Icons.Get(icoName);
                 if(it.Icon16==null)it.Icon16=ico;
                 g.DrawImage(ico,ITEM_INDENT+2,y+(ROW_H-ICO)/2,ICO,ICO);
                 bool cut=_cutPaths.Contains(it.FullPath??"");
@@ -2318,9 +2528,13 @@ namespace WinExplorer
             else if(e.Button==MouseButtons.Right)
             {
                 if(idx>=0&&idx<_items.Count){
-                    if(!_sel.Contains(idx)){_sel.Clear();_sel.Add(idx);_lastSel=idx;}
+                    bool ctrl=(ModifierKeys&Keys.Control)!=0,shift=(ModifierKeys&Keys.Shift)!=0;
+                    if(ctrl){if(_sel.Contains(idx))_sel.Remove(idx);else{_sel.Add(idx);_lastSel=idx;}}
+                    else if(shift&&_lastSel>=0){_sel.Clear();for(int i2=Math.Min(_lastSel,idx);i2<=Math.Max(_lastSel,idx);i2++)_sel.Add(i2);}
+                    else if(!_sel.Contains(idx)){_sel.Clear();_sel.Add(idx);_lastSel=idx;}
                     Invalidate();RebuildContextConvert();
-                    (_items[idx].IsDirectory?_folderMenu:_fileMenu).Show(this,e.Location);
+                    bool anyDir=_sel.Any(i2=>_items[i2].IsDirectory);
+                    (anyDir&&_sel.Count==1?_folderMenu:_sel.Count==1?_fileMenu:_fileMenu).Show(this,e.Location);
                 }
                 else{Invalidate();_bgMenu.Show(this,e.Location);}
             }
@@ -2478,10 +2692,10 @@ namespace WinExplorer
             _folderMenu=MI.MakeMenu();var fg=GiveSub();
             _folderMenu.Items.AddRange(new ToolStripItem[]{MI.Item("Open","folder",(s,e)=>OpenSel()),MI.Item("Open in new window","folder"),MI.Item("Pin to Quick access","quick_access"),MI.Item("Take Ownership","properties"),ConvertSub(),MI.Sep(),fg,MI.Item("Restore","undo"),MI.Sep(),SendSub(),MI.Sep(),MI.Item("Cut","cut",(s,e)=>CutSelected()),MI.Item("Copy","copy",(s,e)=>CopySelected()),MI.Sep(),MI.Item("Create shortcut","shortcut",(s,e)=>{if(_sel.Count>0)CreateShortcut(_items[_sel.First()].FullPath);}),MI.Item("Delete","delete",(s,e)=>DeleteSelected()),MI.Item("Rename","rename",(s,e)=>StartRename()),MI.Sep(),MI.Item("Properties","properties")});
             _fileMenu=MI.MakeMenu();var fig=GiveSub();var fiow=OpenWithSub();
-            _fileMenu.Items.AddRange(new ToolStripItem[]{MI.Item("Open","file",(s,e)=>OpenSel()),MI.Item("Pin","quick_access"),MI.Item("Edit","rename"),MI.Item("Take Ownership","properties"),ConvertSub(),ArchiveSub(),fiow,MI.Sep(),fig,MI.Item("Restore previous version","undo"),MI.Sep(),SendSub(),MI.Item("Cut","cut",(s,e)=>CutSelected()),MI.Item("Copy","copy",(s,e)=>CopySelected()),MI.Sep(),MI.Item("Create shortcut","shortcut",(s,e)=>{if(_sel.Count>0)CreateShortcut(_items[_sel.First()].FullPath);}),MI.Item("Delete","delete",(s,e)=>DeleteSelected()),MI.Item("Rename","rename",(s,e)=>StartRename()),MI.Sep(),MI.Item("Properties","properties")});
+            _fileMenu.Items.AddRange(new ToolStripItem[]{MI.Item("Open","file",(s,e)=>OpenSel()),MI.Item("Pin","quick_access"),MI.Item("Edit","rename"),MI.Item("Take Ownership","properties"),ConvertSub(),ArchiveExtractSub(),fiow,MI.Sep(),fig,MI.Item("Restore previous version","undo"),MI.Sep(),SendSub(),MI.Item("Cut","cut",(s,e)=>CutSelected()),MI.Item("Copy","copy",(s,e)=>CopySelected()),MI.Sep(),MI.Item("Create shortcut","shortcut",(s,e)=>{if(_sel.Count>0)CreateShortcut(_items[_sel.First()].FullPath);}),MI.Item("Delete","delete",(s,e)=>DeleteSelected()),MI.Item("Rename","rename",(s,e)=>StartRename()),MI.Sep(),MI.Item("Properties","properties")});
         }
  
-        ToolStripMenuItem ArchiveSub()
+        ToolStripMenuItem ArchiveExtractSub()
         {
             var s=MI.Sub("Extract","zip");
             s.DropDownItems.Add(MI.Item("Extract Here","zip",(s2,e2)=>ExtractArchive(false)));
@@ -2513,8 +2727,7 @@ namespace WinExplorer
             void ReplaceConvert(ContextMenuStrip m, int pos)
             {
                 if(pos>=0&&pos<m.Items.Count&&m.Items[pos] is ToolStripMenuItem mi&&mi.Text=="Convert to...")
-                    m.Items.RemoveAt(pos);
-                    m.Items.Insert(pos, ConvertSub());
+                {var fresh=ConvertSub();m.Items.RemoveAt(pos);m.Items.Insert(pos,fresh);}
             }
             ReplaceConvert(_folderMenu,4);
             ReplaceConvert(_fileMenu,4);
@@ -2709,14 +2922,29 @@ namespace WinExplorer
         void Apply(string path)
         {
             _nav.CurrentPath=path;_nav.BackEnabled=_hi>0;_nav.ForwardEnabled=_hi<_hist.Count-1;
-            if(Directory.Exists(path)){_content.LoadPath(path);_tree.SelectPath(path);Text=$"{Path.GetFileName(path)??path}  File Explorer";}
-            else Text=$"{path}  File Explorer";
+            if(path.Contains("|")){{string _ap=path.Substring(0,path.IndexOf("|")),_as=path.Substring(path.IndexOf("|")+1);if(File.Exists(_ap)){_content.LoadArchive(_ap,_as);Text=$"{Path.GetFileName(_ap)??_ap} ? File Explorer";}}}
+            else if(Directory.Exists(path)){_content.LoadPath(path);_tree.SelectPath(path);Text=$"{Path.GetFileName(path)??path} ? File Explorer";}
+            else Text=$"{path} ? File Explorer";
             if(_preview.Visible)_preview.ShowItem(_content.FirstSelected);
             SetStatus(null);
         }
         void GoBack(){if(_hi>0){_hi--;Apply(_hist[_hi]);}}
         void GoFwd(){if(_hi<_hist.Count-1){_hi++;Apply(_hist[_hi]);}}
-        void GoUp(){try{string up=Directory.GetParent(_nav.CurrentPath)?.FullName;if(up!=null)Navigate(up);}catch{}}
+        void GoUp()
+        {
+            if(_content.InArchive)
+            {
+                string sub=_content.ArchiveSub;
+                int sl=sub.LastIndexOf('/');
+                if(sl>0)_content.LoadArchive(_content.ArchivePath,sub.Substring(0,sl));
+                else _content.LoadArchive(_content.ArchivePath,"");
+                // Exited archive root – go to parent folder
+                if(_content.ArchiveSub.Length==0&&sl<0)Navigate(Path.GetDirectoryName(_content.ArchivePath)??"");
+                return;
+            }
+            try{string up=Directory.GetParent(_nav.CurrentPath)?.FullName;if(up!=null)Navigate(up);}catch{}
+        }
+        static bool IsArchiveFile(string p){if(p==null)return false;string e=Path.GetExtension(p).ToLower();return e==".zip"||e==".rar"||e==".7z"||e==".tar"||e==".gz"||e==".bz2"||e==".xz"||e==".cab";}
         void NewFolder()
         {
             string cur=_content.CurrentPath; if(!Directory.Exists(cur))return;
