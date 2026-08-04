@@ -562,7 +562,7 @@ namespace WinExplorer
                 if(img==null)img=Icons.Get(ico);
                 int ix=r.X+(r.Width-ICO)/2,iy=r.Y+(r.Height-ICO)/2;
                 if(!en){// draw semi-transparent
-                    float[][] cm={{1,0,0,0,0},{0,1,0,0,0},{0,0,1,0,0},{0,0,0,0.35f,0},{0,0,0,0,1}};
+                    float[][] cm = new float[][] { new float[] { 1,0,0,0,0 }, new float[] { 0,1,0,0,0 }, new float[] { 0,0,1,0,0 }, new float[] { 0,0,0,0.35f,0 }, new float[] { 0,0,0,0,1 } };
                     var ia=new ImageAttributes();ia.SetColorMatrix(new ColorMatrix(cm));
                     g.DrawImage(img,new Rectangle(ix,iy,ICO,ICO),0,0,img.Width,img.Height,GraphicsUnit.Pixel,ia);
                     ia.Dispose();
@@ -2494,7 +2494,8 @@ namespace WinExplorer
             void ReplaceConvert(ContextMenuStrip m, int pos)
             {
                 if(pos>=0&&pos<m.Items.Count&&m.Items[pos] is ToolStripMenuItem mi&&mi.Text=="Convert to...")
-                    m.Items[pos]=ConvertSub();
+                    m.Items.RemoveAt(pos);
+                    m.Items.Insert(pos, ConvertSub());
             }
             ReplaceConvert(_folderMenu,4);
             ReplaceConvert(_fileMenu,4);
