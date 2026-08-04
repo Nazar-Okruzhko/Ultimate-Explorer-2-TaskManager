@@ -1623,11 +1623,11 @@ namespace WinExplorer
             string exe7z=Path.Combine(Path.GetDirectoryName(Application.ExecutablePath)??"","7z.exe");
             if(!File.Exists(exe7z))exe7z=@"C:\Program Files\7-Zip\7z.exe";
             if(File.Exists(exe7z))
-                try { Process.Start(new ProcessStartInfo(exe7z, $"x \"{archive}\" -o\"{dest}\" -y") { UseShellExecute = false, CreateNoWindow = true })?.WaitForExit(); MessageBox.Show("Extracted via 7-Zip.", "Extract", MessageBoxButtons.OK, MessageBoxIcon.Information); return; } catch { }
+                try{var _7args="x \""+archive+"\" -o\""+dest+"\" -y";Process.Start(new ProcessStartInfo(exe7z,_7args){UseShellExecute=false,CreateNoWindow=true})?.WaitForExit();MessageBox.Show("Extracted via 7-Zip.","Extract",MessageBoxButtons.OK,MessageBoxIcon.Information);return;}catch{}
             // Try WinRAR
             string rar=@"C:\Program Files\WinRAR\WinRAR.exe";
             if(File.Exists(rar))
-                try{Process.Start(new ProcessStartInfo(rar,$"x \"{archive}\" \"{dest}\\\""){UseShellExecute=true})?.WaitForExit();return;}catch{}
+                try{var _rargs="x \""+archive+"\" \""+dest+"\\\"";Process.Start(new ProcessStartInfo(rar,_rargs){UseShellExecute=true})?.WaitForExit();return;}catch{}
             MessageBox.Show("Install 7-Zip or WinRAR to extract this archive type.","Extract",MessageBoxButtons.OK,MessageBoxIcon.Information);
         }
         protected override void OnPaint(PaintEventArgs e)
@@ -1802,12 +1802,31 @@ namespace WinExplorer
                     _picBox.Image?.Dispose();
                     if(IsGdiImg(ext))
                     {
-                        var bytes=File.ReadAllBytes(item.FullPath);
-                        using(var ms=new MemoryStream(bytes)) _picBox.Image=new Bitmap(Image.FromStream(ms));
+                        // WEBP may fail on older GDI+ / Windows versions — fall back to shell thumb
+                        bool _loaded=false;
+                        if(ext==".webp"||ext==".ga")
+                        {
+                            var _th=Shell.Thumbnail(item.FullPath,Math.Min(Width,Height));
+                            if(_th!=null){_picBox.Image=_th;_loaded=true;}
+                        }
+                        if(!_loaded)
+                        {
+                            try
+                            {
+                                var bytes=File.ReadAllBytes(item.FullPath);
+                                using(var ms=new MemoryStream(bytes)) _picBox.Image=new Bitmap(Image.FromStream(ms));
+                            }
+                            catch
+                            {
+                                // GDI+ failed (e.g. animated WebP, unsupported variant) — use shell thumb
+                                var _fb=Shell.Thumbnail(item.FullPath,Math.Min(Width,Height));
+                                _picBox.Image=_fb;
+                            }
+                        }
                     }
                     else
                     {
-                        // DDS / TGA / SVG / others: ask Windows shell for a thumbnail
+                        // DDS / TGA / GA / SVG / others: ask Windows shell for a thumbnail
                         var th=Shell.Thumbnail(item.FullPath,224)??Shell.LargeIcon(item.FullPath);
                         _picBox.Image=th;
                     }
@@ -1877,7 +1896,7 @@ namespace WinExplorer
         static bool IsGdiImg(string e)=>".png.jpg.jpeg.bmp.gif.ico.tiff.tif.webp.emf.wmf".Contains(e);
         // All image types we handle (non-GDI via shell thumbnail)
         static bool Is3D(string e)=>".obj.stl.ply".Contains(e);
-        static bool IsImg(string e)=>IsGdiImg(e)||".dds.tga.svg.svgz.exr.hdr.psd.pcx.ppm.pgm.pbm.xbm.xpm.raw.cr2.nef.arw.orf.heic.heif.avif.jxl.tga".Contains(e);
+        static bool IsImg(string e)=>IsGdiImg(e)||".dds.tga.ga.svg.svgz.exr.hdr.psd.pcx.ppm.pgm.pbm.xbm.xpm.raw.cr2.nef.arw.orf.heic.heif.avif.jxl".Contains(e);
         static bool IsTxt(string e)=>".txt.cs.py.cpp.c.h.hpp.cxx.cc.js.ts.jsx.tsx.html.htm.css.scss.less.xml.json.md.ini.cfg.log.bat.cmd.sh.bash.zsh.yaml.yml.toml.lua.rb.java.php.go.rs.swift.kt.vb.fs.sql.ps1.r.m.asm.s.awk.sed.dockerfile.makefile.cmake.gradle.properties.env".Contains(e.TrimStart('.').ToLower().Contains('.')?e:"."+e.TrimStart('.'));
         static bool IsPdf(string e)=>e==".pdf";
         static bool IsArchive(string e)=>".zip.rar.7z.tar.gz.bz2.xz.zst.cab.iso.tgz.tbz2".Contains(e);
@@ -2576,10 +2595,7 @@ namespace WinExplorer
                 int ci=2; while(File.Exists(outPath))outPath=Path.Combine(Path.GetDirectoryName(src2)??"",Path.GetFileNameWithoutExtension(src2)+"_"+ci+++toExt);
                 // Try ffmpeg if available
                 string ffmpeg=Path.Combine(Path.GetDirectoryName(Application.ExecutablePath)??"","ffmpeg.exe");
-                if(File.Exists(ffmpeg))
-                    Process.Start(new ProcessStartInfo(ffmpeg,$"-i \"{src2}\" \"{outPath}\""){UseShellExecute=false,CreateNoWindow=true})?.WaitForExit();
-                else
-                    MessageBox.Show("ffmpeg.exe not found. Place it next to the application to enable audio conversion.","Convert",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                if(File.Exists(ffmpeg)){var _fargs="-i \""+src2+"\" \""+outPath+"\"";Process.Start(new ProcessStartInfo(ffmpeg,_fargs){UseShellExecute=false,CreateNoWindow=true})?.WaitForExit();}else MessageBox.Show("ffmpeg.exe not found. Place it next to the application to enable audio conversion.","Convert",MessageBoxButtons.OK,MessageBoxIcon.Information);
                 LoadPath(CurrentPath,keepScroll:true);
             }
             catch(Exception ex){MessageBox.Show(ex.Message,"Convert Error",MessageBoxButtons.OK,MessageBoxIcon.Error);}
